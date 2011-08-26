@@ -8,8 +8,8 @@ class @Universe
 		y: 0
 	
 	constructor: (params={}) ->
-		@framerate	= params.framerate	||	100		# frames per second
-		@gravity	= params.gravity	|| -10		# meters per second per second
+		@framerate	= params.framerate	||	60		# frames per second
+		@gravity	= params.gravity	|| -100		# meters per second per second
 		@scale		= params.scale		||	10		# pixels per meter
 		@vacuum		= params.vacuum		||	false	# TODO: air resistance
 		@space		= params.space		||	null	# Find space.
@@ -25,6 +25,7 @@ class @Universe
 	
 	run: ->
 		@moveObjects()
+		@checkCollisions()
 		@time.advance()
 	
 	stop: ->
@@ -54,7 +55,25 @@ class @Universe
 			object.element.style.left = "#{object.position.x*@scale}px"
 			object.element.style.top = "#{object.position.y*@scale}px"
 			# TODO: scale object for z-axis movement
+		
+	# basic collision detection for edges of the universe
+	# TODO: fix objects getting stuck on edge, collisions between objects, inelastic collisions, performance
+	checkCollisions: ->
+		for object in @objects
+			object.top_edge		= @scale * object.y()
+			object.right_edge	= @scale * object.x() + object.width
+			object.bottom_edge	= @scale * object.y() - object.height
+			object.left_edge	= @scale * object.x()
 			
+			if object.top_edge >= object.universe.space.clientHeight
+				object.velocity.y = object.velocity.y * -1
+			else if object.bottom_edge <= 0
+				object.velocity.y = object.velocity.y * -1
+			else if object.left_edge <= 0
+				object.velocity.x = object.velocity.x * -1
+			else if object.right_edge >= object.universe.space.clientWidth
+				object.velocity.x = object.velocity.x * -1
+	
 class @UniverseTimer
 	constructor: (@universe) ->
 		@count	= 0
